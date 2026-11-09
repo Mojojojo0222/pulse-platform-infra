@@ -1,0 +1,71 @@
+# =============================================================================
+# Observability Stack — ArgoCD MULTI-SOURCE Application
+# =============================================================================
+# Multi-source pattern (ArgoCD ≥2.6):
+#   source  #1 : Helm chart from a chart repository (kube-prometheus-stack)
+#   source  #2 : Git repo exposed via `ref: values` so #1 can read valueFiles
+#   source  #3 : Git directory of plain manifests (alert webhook receiver)
+#
+# RULE: never mix `spec.source` (singular) with `spec.sources` (plural).
+#
+# valueFiles path semantics:
+#   $values  → root of the repo named by the source that has `ref: values`
+#   so `$values/gitops/values/monitoring-values.yaml` resolves inside
+#   pulse-platform-infra.git at branch master.
+#
+# Chart pinned to the exact version verified on the lab cluster:
+#   kube-prometheus-stack 93.1.1 (app v0.95.1) — matches `helm list`.
+#
+# Includes: Prometheus, Grafana, Alertmanager, Prometheus Operator,
+#           kube-state-metrics, node-exporter,
+#           custom PulsePodCrashLooping rule + webhook routing,
+#           alert-receiver Deployment/Service (source #3).
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: pulse-platform
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    # --- Source 1: Helm chart (version-pinned, NOT floating latest) ---
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: kube-prometheus-stack
+      targetRevision: "93.1.1"
+      helm:
+        valueFiles:
+          - $values/gitops/values/monitoring-values.yaml
+
+    # --- Source 2: Git repo for values only (no path → not deployed) ---
+    - repoURL: https://github.com/Mojojojo0222/pulse-platform-infra.git
+      targetRevision: master
+      ref: values
+
+    # --- Source 3: plain YAML manifests (alert webhook receiver) ---
+    - repoURL: https://github.com/Mojojojo0222/pulse-platform-infra.git
+      targetRevision: master
+      path: gitops/monitoring-extras
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+
+  syncPolicy:
+    automated:
+      # prune=false: a git deletion will NOT wipe Prometheus/Grafana/CRDs.
+      # Enable only after reading docs/GITOPS_ARCHITECTURE.md §Prune.
+      prune: false
+      selfHeal: true
+    syncOptions:
+      # Fresh clusters need the monitoring namespace created for us.
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+      - ServerSideApply=true
+      # CRDs from kube-prometheus-stack (Prometheus/Alertmanager/ServiceMonitor
+      # etc.) must not be deleted by prune even if prune is later enabled.
+      - PruneLast=true

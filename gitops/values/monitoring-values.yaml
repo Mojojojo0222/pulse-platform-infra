@@ -1,0 +1,79 @@
+# monitoring-values.yaml 
+
+# 1. Core Prometheus Rules (Alarms)
+additionalPrometheusRulesMap:
+  pulse-alerts:
+    groups:
+      - name: pulse-application-alerts
+        rules:
+          - alert: PulsePodCrashLooping
+            expr: sum by (namespace, pod, instance) (increase(kube_pod_container_status_restarts_total[2m])) > 0
+            for: 30s
+            labels:
+              severity: critical
+              tier: platform
+            annotations:
+              summary: "Application Pod crashing on node {{ $labels.instance }}"
+              description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has restarted in the last 2 minutes."
+
+# 2. Alertmanager Routing & Receiver Configuration
+alertmanager:
+  enabled: true
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      group_by: ['alertname', 'namespace', 'pod']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 1h
+      receiver: 'terminal-smoke-test'
+      routes:
+        - match:
+            severity: critical
+          receiver: 'terminal-smoke-test'
+    receivers:
+      - name: 'terminal-smoke-test'
+        # We use a webhook receiver pointing to a local diagnostic engine or mock listener
+        webhook_configs:
+          - url: 'http://monitoring-alert-routing-svc.monitoring.svc.cluster.local:8089'
+            send_resolved: true
+  alertmanagerSpec:
+    replicas: 1
+    storage: {}
+
+# 3. Prometheus Operator Infrastructure Resources
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
+
+# 4. Lean Infra settings matching your current cluster footprint
+grafana:
+  persistence:
+    enabled: false
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+prometheus:
+  prometheusSpec:
+    replicas: 1
+    retention: 12h
+    retentionSize: 2GB
+    storageSpec: {}
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi

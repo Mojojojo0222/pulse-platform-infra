@@ -1,0 +1,11 @@
+# =============================================================================
+# DEPRECATED POINTER — canonical copy lives in GitOps
+# =============================================================================
+# This file is kept only so existing notes/links do not break.
+# The version ArgoCD deploys is:
+#   gitops/monitoring-extras/alert-receiver.yaml
+#   (included as source #3 of gitops/apps/monitoring.yaml)
+#
+# Edit the gitops/ copy. This file is NOT read by ArgoCD.
+# =============================================================================
+# See: ../gitops/monitoring-extras/alert-receiver.yaml

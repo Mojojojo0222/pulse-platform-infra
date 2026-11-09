@@ -1,0 +1,52 @@
+# =============================================================================
+# Pulse Platform — Root App-of-Apps (ArgoCD Application)
+# =============================================================================
+# What: The single ArgoCD Application that points at gitops/apps/ and thereby
+#       discovers and manages every child Application in that directory.
+# Why:  One entry point for the whole platform. Recreate the cluster → apply
+#       only THIS file → every child app (pulse, monitoring, metrics-server)
+#       is created and synced automatically.
+# How:  ArgoCD's application-controller watches this Application, clones the
+#       git repo, lists YAML in path gitops/apps/, and creates each
+#       `kind: Application` it finds (the "App of Apps" pattern).
+#
+# Reconciliation notes:
+#   - automated.selfHeal=true  → if someone kubectl-edits a child app, ArgoCD
+#                                reverts it to the git definition.
+#   - automated.prune=false    → DELETING a file from gitops/apps/ will NOT
+#                                delete the child Application or its resources.
+#                                Flip to true only after you understand prune
+#                                blast-radius (see docs/GITOPS_ARCHITECTURE.md).
+#   - This root app does NOT deploy workloads itself — only Application CRs.
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: pulse-platform-root
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: pulse-platform
+    app.kubernetes.io/component: root-app-of-apps
+  finalizers:
+    # Cascade-delete child Applications if this root Application is deleted.
+    # Harmless in lab; be deliberate in production.
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Mojojojo0222/pulse-platform-infra.git
+    targetRevision: master
+    path: gitops/apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      # Children are Application CRs that already carry their own namespace
+      # (argocd). CreateNamespace is unnecessary here.
+      - CreateNamespace=false
+      - ApplyOutOfSyncOnly=true
+      - ServerSideApply=true

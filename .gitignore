@@ -1,0 +1,47 @@
+# --- Nested application repository (has its own git history) ---
+application/
+
+# --- Terraform state & local artifacts (NEVER commit) ---
+*.tfstate
+*.tfstate.*
+*.tfplan
+.terraform/
+# NOTE: .terraform.lock.hcl IS committed (HashiCorp best practice — provider
+# checksums). Only the .terraform/ working directory is ignored.
+crash.log
+crash.*.log
+terraform.tfvars
+*.auto.tfvars
+
+# --- Secrets / credentials (defense in depth) ---
+*.pem
+*.key
+*.p12
+*.pfx
+.env
+.env.*
+!.env.example
+*.secret
+kubeconfig
+kubeconfig.*
+.aws/
+.git-credentials
+
+# --- Build / OS / editor ---
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Local override files (keep examples) ---
+.gitignore.append
+*.local

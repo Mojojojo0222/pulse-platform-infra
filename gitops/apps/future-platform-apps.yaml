@@ -1,0 +1,33 @@
+# =============================================================================
+# FUTURE Platform Apps — PLACEHOLDER ONLY (NOT IMPLEMENTED)
+# =============================================================================
+# This file intentionally contains NO active Applications.
+# It documents planned extensions so the App-of-Apps layout stays stable when
+# they arrive. Uncomment and flesh out only when the feature is actually built.
+#
+# Planned (see docs/PLATFORM_ARCHITECTURE.md §Future):
+#   1. HPA demo app          — needs metrics-server (already a child app)
+#   2. Node autoscaling      — Karpenter OR Cluster Autoscaler (not both)
+#   3. RDS PostgreSQL        — Terraform layer, NEVER under ArgoCD prune
+#
+# NEVER place RDS / stateful cloud infrastructure under an auto-pruned
+# Application path. RDS lifecycle belongs to Terraform, not ArgoCD.
+# =============================================================================
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: hpa-demo
+#   namespace: argocd
+# spec:
+#   project: default
+#   source:
+#     repoURL: https://github.com/Mojojojo0222/pulse-platform-infra.git
+#     targetRevision: master
+#     path: gitops/future/hpa-demo
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: pulse
+#   syncPolicy:
+#     automated:
+#       prune: false
+#       selfHeal: true

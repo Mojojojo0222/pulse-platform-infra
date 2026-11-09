@@ -1,0 +1,10 @@
+# Copy to terraform.tfvars only if you need to override defaults.
+# Update this CIDR whenever your public IP changes.
+cluster_public_cidrs = ["103.171.55.70/32"]
+
+# t3.medium is the initial recommended lab size for EKS + Argo CD.
+node_instance_types = ["t3.medium"]
+node_desired_size   = 2
+node_min_size       = 2
+node_max_size       = 3
+node_disk_size      = 30

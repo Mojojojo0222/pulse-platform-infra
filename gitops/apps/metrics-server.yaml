@@ -1,0 +1,38 @@
+# =============================================================================
+# Metrics Server — ArgoCD Application (child of pulse-platform-root)
+# =============================================================================
+# Why: Metrics Server exposes CPU/memory metrics via Metrics API
+#      (metrics.k8s.io). HPA and `kubectl top` depend on it.
+#      Prometheus is NOT a substitute — Prometheus scrapes for long-term
+#      monitoring/alerting; HPA reads the Metrics API served by Metrics Server.
+#
+# Chart pinned to the exact version verified on the lab cluster:
+#   metrics-server 3.14.0 (app 0.9.0) — matches `helm list` observation.
+# No custom values (helm get values returned null → chart defaults).
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: metrics-server
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: pulse-platform
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://kubernetes-sigs.github.io/metrics-server/
+    chart: metrics-server
+    targetRevision: "3.14.0"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false
+      - ApplyOutOfSyncOnly=true
+      - ServerSideApply=true

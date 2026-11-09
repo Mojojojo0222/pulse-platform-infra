@@ -1,0 +1,12 @@
+# =============================================================================
+# DEPRECATED POINTER — canonical copy lives in GitOps
+# =============================================================================
+# ArgoCD no longer reads this file directly.
+# Canonical child Application (managed by root App-of-Apps):
+#   gitops/apps/pulse-api.yaml
+# Root App-of-Apps:
+#   gitops/root/platform-root.yaml
+#
+# Editing THIS file has no effect on the cluster.
+# =============================================================================
+# See: ./apps/pulse-api.yaml

@@ -1,0 +1,11 @@
+# =============================================================================
+# DEPRECATED POINTER — canonical copy lives in GitOps
+# =============================================================================
+# This file is kept only so existing notes/links do not break.
+# The version ArgoCD deploys is:
+#   gitops/values/monitoring-values.yaml
+#   (consumed by gitops/apps/monitoring.yaml via multi-source `ref: values`)
+#
+# Edit the gitops/ copy. This file is NOT read by ArgoCD.
+# =============================================================================
+# See: ../gitops/values/monitoring-values.yaml
