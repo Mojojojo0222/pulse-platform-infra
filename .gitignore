@@ -45,3 +45,6 @@ logs/
 # --- Local override files (keep examples) ---
 .gitignore.append
 *.local
+
+# Local-only documentation (user decision: not published to GitHub)
+docs/
