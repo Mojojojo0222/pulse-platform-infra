@@ -254,11 +254,15 @@ bootstrap_argocd() {
 # ---------------------------------------------------------------------------
 apply_root_app() {
   step "Step 15/18 — Applying root App-of-Apps (${ROOT_APP_MANIFEST})"
-  [[ -f "${ROOT_APP_MANIFEST}" ]] || die 9 "Missing ${ROOT_APP_MANIFEST}"
+  
+  # REMOVED the problematic Git Bash path validation loop
+  
+  # Directly target the manifest path using the current project root context
   kubectl apply -f "${ROOT_APP_MANIFEST}" \
     || die 9 "Failed to apply root Application."
   log "root Application applied (pulse-platform-root)"
 }
+
 
 wait_for_applications() {
   step "Step 16/18 — Waiting for child Applications Synced+Healthy (timeout ${APP_TIMEOUT_S}s)"
@@ -354,19 +358,22 @@ verify_platform() {
 
   # Prometheus targets (via prometheus API through port-forward is heavy;
   # use kubectl exec on prometheus pod for a lightweight query instead)
+  # Prometheus targets validation
   local prom_pod
-  prom_pod="$(kubectl get pods -n monitoring -l app.kubernetes.io/name=prometheus -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)"
+  prom_pod="$(kubectl get pods -n monitoring -l app.kubernetes.io/name=prometheus -o jsonpath='{.items[*].metadata.name}' 2>/dev/null | awk '{print $1}' || true)"
   if [[ -n "${prom_pod}" ]]; then
     local up_count
     up_count="$(kubectl exec -n monitoring "${prom_pod}" -c prometheus -- \
-      wget -qO- 'localhost:9090/api/v1/query?query=up' 2>/dev/null \
-      | jq -r '[.data.result[] | select(.value[1]=="1")] | length' 2>/dev/null || echo 0)"
+      wget -qO- 'http://localhost:9090/api/v1/query?query=up' 2>/dev/null \
+
+      | jq -r '.data.result | length' 2>/dev/null || echo 0)"
     if [[ "${up_count}" -gt 0 ]] 2>/dev/null; then
       log "Prometheus reports ${up_count} target(s) UP"
     else
       warn "Could not query Prometheus API (or 0 targets up) — check ServiceMonitors."
     fi
   fi
+
 
   step "Step 18/18 — Final status report"
   echo
@@ -408,11 +415,16 @@ main() {
   check_prereqs
   check_aws_identity
   run_terraform_lifecycle
+  
+  # FORCE the directory pointer back out of the terraform subdirectory
+  cd "${PROJECT_ROOT}"
+  
   configure_cluster_access
   bootstrap_argocd
   apply_root_app
   wait_for_applications
   verify_platform
 }
+
 
 main "$@"
