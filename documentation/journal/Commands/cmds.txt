@@ -1,8 +1,0 @@
-cd /e/Platform-Lab/terraform/platform
-terraform plan          # review: ~13+ create
-# you approve
-terraform apply         # NO -target; full apply; ~12–15 min
-
-aws eks update-kubeconfig --name pulse-eks --region ap-south-1
-kubectl get nodes -L topology.kubernetes.io/zone
-kubectl get pods -n kube-system
