@@ -2,7 +2,7 @@
 # Pulse API — ArgoCD Application (child of pulse-platform-root)
 # =============================================================================
 # Source of truth: pulse-platform.git @ master, path k8s/
-# (application/k8s/{namespace,deployment,service,pdb}.yaml pushed to GitHub)
+# (application/k8s/{namespace,deployment,service,pdb,rbac}.yaml pushed to GitHub)
 #
 # This file is the GitOps successor of gitops/pulse-api-application.yaml.
 # Spec is intentionally identical so adoption on a live cluster is a no-op
@@ -25,7 +25,7 @@ spec:
     path: k8s
   destination:
     server: https://kubernetes.default.svc
-    namespace: pulse
+    namespace: pulse-system
   syncPolicy:
     automated:
       # prune=false: deleting k8s/*.yaml in git will NOT delete live resources.
@@ -33,7 +33,7 @@ spec:
       prune: false
       selfHeal: true
     syncOptions:
-      # namespace.yaml inside k8s/ creates the pulse namespace itself.
+      # namespace.yaml inside k8s/ creates the pulse-system namespace itself.
       - CreateNamespace=false
       - ApplyOutOfSyncOnly=true
       - ServerSideApply=true

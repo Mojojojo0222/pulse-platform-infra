@@ -306,11 +306,11 @@ verify_platform() {
   local failures=0
 
   # Pulse
-  if kubectl rollout status deployment/pulse-api -n pulse --timeout=120s >/dev/null 2>&1; then
-    log "pulse-api Deployment rollout OK ($(kubectl get deploy pulse-api -n pulse -o jsonpath='{.status.readyReplicas}')/$(kubectl get deploy pulse-api -n pulse -o jsonpath='{.spec.replicas}') ready)"
+  if kubectl rollout status deployment/pulse-api -n pulse-system --timeout=120s >/dev/null 2>&1; then
+    log "pulse-api Deployment rollout OK ($(kubectl get deploy pulse-api -n pulse-system -o jsonpath='{.status.readyReplicas}')/$(kubectl get deploy pulse-api -n pulse-system -o jsonpath='{.spec.replicas}') ready)"
   else
     err "pulse-api Deployment not ready"
-    kubectl get pods -n pulse || true
+    kubectl get pods -n pulse-system || true
     failures=1
   fi
 
@@ -386,7 +386,7 @@ verify_platform() {
   kubectl get applications.argoproj.io -n "${ARGOCD_NS}" 2>/dev/null || true
   echo
   echo "Pulse namespace:"
-  kubectl get deploy,svc,pdb -n pulse 2>/dev/null || true
+  kubectl get deploy,svc,pdb -n pulse-system 2>/dev/null || true
   echo
   echo "Monitoring namespace:"
   kubectl get pods -n monitoring 2>/dev/null || true
